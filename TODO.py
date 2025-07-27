@@ -230,11 +230,5 @@ def main():
             id_for_delete = console_input.get_id_for_delete()
             db.delete_only_id_tasks(id_for_delete)
             db.get_all_info()
-            
-
-
     db.close()
-
-
-
 main()
