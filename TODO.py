@@ -39,6 +39,16 @@ class ConsoleInput:
 
     def get_username(self):
         return input('Введите имя пользователя: ').strip().lower()
+    
+    def get_id_for_delete(self):
+        print('введите нужные id через enter, для окончания ввода нажмите enter, ничего не вводя')
+        id_spisok = []
+        while True:
+           a = input()
+           if not a: break
+           id_spisok.append(a)
+        print( 'конец ввода')
+        return id_spisok
 
 #класс для работы с sql 
 class Database:
@@ -47,7 +57,7 @@ class Database:
             self.conn = psycopg2.connect(
                 dbname='postgres',
                 user='postgres',
-                password='simple',
+                password='792100',
                 host='localhost',
                 port='5432'
             )
@@ -121,49 +131,70 @@ class Database:
         with self.conn.cursor() as cursor:
             try:
                 cursor.execute('''
-                    SELECT u.username, t.task
+                    SELECT t.task_id, u.username, t.task
                     FROM users_task t
                     JOIN name_users u ON t.user_id = u.user_id
-                    ORDER BY u.username, t.task
+                    ORDER BY u.username, t.task_id
                 ''')
                 all_tasks = cursor.fetchall()
-                if not all_tasks: return print('В таблице пусто')
+        
+                if not all_tasks:
+                    print('В таблице нет данных')
+                    return
+        
                 print("\nЗадачи всех пользователей:")
                 current_user = None
-                for username, task in all_tasks:
+                for task_id, username, task in all_tasks:
                     if username != current_user:
                         print(f"\nПользователь: {username}")
                         current_user = username
-                    print(f"  - {task}")
+                    print(f"id: {task_id} - задание: {task}")
             
             except Exception as e:
-                print(f"Ошибка при получении задач: {e}")
-
-    # удаляем задачи заданного имени
+                print(f"Ошибка при получении данных: {e}")
+    
+    #удаляем задачи для определенного юзера
     def delete_user_tasks(self, username):
         with self.conn.cursor() as cursor:
             try:
-              
                 cursor.execute('SELECT user_id FROM name_users WHERE username = %s', (username,))
                 user_result = cursor.fetchone()
-                
+            
                 if not user_result:
                     print(f"Пользователь {username} не найден")
                     return
-                
-                user_id = user_result
-                cursor.execute('''
-                    DELETE FROM users_task 
-                    WHERE user_id = %s
-                ''', (user_id,))
+            
+                cursor.execute('DELETE FROM users_task WHERE user_id = %s', (user_result[0],))
+                self.conn.commit()
+                print(f"Все задачи пользователя {username} удалены")
+            except Exception as e:
+                self.conn.rollback()
+                print(f"Ошибка при удалении задач: {e}")
+    
+    #удаляем все
+    def delete_all(self):
+        with self.conn.cursor() as cursor:
+            try:
+                cursor.execute('TRUNCATE TABLE users_task, name_users RESTART IDENTITY CASCADE')
+                self.conn.commit()
+                print("Все данные удалены")
+            except Exception as e:
+                self.conn.rollback()
+                print(f"Ошибка при очистке таблиц: {e}")
+
+    #удаляем только по айди заданий
+    def delete_only_id_tasks(self, id_for_delete):
+        with self.conn.cursor() as cursor:
+            try:
+                for task_id in id_for_delete:
+                    if task_id in id_for_delete:
+                        cursor.execute('DELETE FROM users_task WHERE task_id = %s', (task_id,))
                 self.conn.commit()
             except Exception as e:
-                print(f"Ошибка при удалении задач: {e}")
                 self.conn.rollback()
-                raise
+                print(f"Ошибка при удалении задач: {e}")
 
     def close(self):
-        
         self.conn.close()
 
 
@@ -179,11 +210,29 @@ def main():
         return
     db.save_tasks(username, data)
     db.get_all_info() 
+    print('\nХотите удалить все данные из таблицы? Напишите - 1 ')
+    print('Хотите удалить данные определенного имени? Напишите - 2  ')
+    print('Хотите удалить данные определенного id? Напишите - 3  ')
+    print('Если вам ничего не нужно, нажмите enter')
+    while True:
+        a = input().strip()
+        if a in ('2'): 
+            username = console_input.get_username()
+            db.delete_user_tasks(username)
+            db.get_all_info()
+            break
+        elif a in ('1'):
+            db.delete_all()
+            db.get_all_info()
+            print('выполнено успешно!')
+            break
+        elif a in ('3'): 
+            id_for_delete = console_input.get_id_for_delete()
+            db.delete_only_id_tasks(id_for_delete)
+            db.get_all_info()
+            
 
-    if input('\nХотите удалить задачи для отдельного пользователя? Напишите да\нет : ').lower() in ('да','хочу'): 
-        username = console_input.get_username()
-        db.delete_user_tasks(username)
-        db.get_all_info()
+
     db.close()
 
 
