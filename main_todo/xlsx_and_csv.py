@@ -7,6 +7,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     filename='app.log'  
 )
+
 logger = logging.getLogger(__name__)
 
 class xlsx_csv():
@@ -35,4 +36,5 @@ class xlsx_csv():
             row+=1
         workbook.close()
         logger.info('XLSX файл успешно создан')
+
 
