@@ -43,7 +43,6 @@ class Database:
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при подключении к базе данных: {e}")
             raise
-
     def close_session(self):
         self.session.close()
         logger.info("Сессия базы данных закрыта")
@@ -128,3 +127,4 @@ class Database:
             self.session.rollback()
             logger.error(f"Ошибка при удалении задач по ID: {e}")
             return False
+
