@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 #класс для получения списка задач и имени
 class ConsoleInput:
     def get_choice(self):
@@ -61,3 +60,4 @@ class ConsoleInput:
             except Exception as e:
                 print(f'Ошибка ввода: {e}')
         return ids
+
