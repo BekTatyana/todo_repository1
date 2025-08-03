@@ -9,6 +9,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler()]
 )
+
 def main():
     logging.basicConfig(
         level=logging.INFO,
@@ -69,4 +70,5 @@ def main():
 
 
 main()
+
 
